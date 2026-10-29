@@ -26,6 +26,16 @@ Aplikasi internal PHP Native 8.5 + MySQL dengan CSS responsif, role access contr
 ## Catatan URL
 Untuk Laragon, Virtual Host lebih disarankan. Jika memakai URL `/public`, pastikan `APP_URL` sesuai persis. Idealnya document root diarahkan langsung ke folder `public/`.
 
+## Deploy ke Plesk
+1. Pilih runtime **PHP** (bukan Static / Generic) dan gunakan PHP 8.5 dengan ekstensi `pdo_mysql`, `openssl`, `curl`, dan `json`.
+2. Deploy seluruh repository, lalu atur document root domain ke folder `public/`. Jangan arahkan document root ke root repository.
+3. Buat database MySQL dan impor `database/schema.sql`.
+4. Atur variabel lingkungan yang tercantum di `.env.example` melalui pengaturan deploy/PHP Plesk. Aplikasi juga membaca file `.env` di root repository bila platform menaruh variabel di sana. Buat `APP_KEY` acak 32 byte Base64; jangan memakai nilai contoh.
+5. Isi `APP_URL` dengan URL HTTPS domain tanpa slash di akhir, serta kredensial database produksi. Pastikan folder `storage/repos` dapat ditulis oleh PHP jika fitur GitHub repository digunakan.
+6. Setelah konfigurasi selesai, buka `/setup.php` untuk membuat admin awal, lalu hapus atau nonaktifkan `public/setup.php`.
+
+Deployment sebagai Static / Generic tidak menjalankan PHP dan tidak dapat digunakan untuk aplikasi ini.
+
 ## Role
 - `admin`: semua fungsi termasuk pengelolaan pengguna dan koneksi GitHub.
 - `it`: CRUD kredensial, melihat dashboard, akses GitHub yang diizinkan.
