@@ -11,8 +11,8 @@ return [
     'db' => [
         'host' => '127.0.0.1',
         'port' => '3306',
-        'name' => 'brankas_kredensial',
-        'user' => 'pwit',
+        'name' => 'pwit',
+        'user' => 'brankas_kredensial',
         'pass' => 'majuterusrajaemas123',
         'charset' => 'utf8mb4',
     ],
