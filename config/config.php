@@ -12,8 +12,8 @@ return [
         'host' => '127.0.0.1',
         'port' => '3306',
         'name' => 'brankas_kredensial',
-        'user' => 'root',
-        'pass' => '',
+        'user' => 'pwit',
+        'pass' => 'majuterusrajaemas123',
         'charset' => 'utf8mb4',
     ],
     // Generate: php -r "echo base64_encode(random_bytes(32)), PHP_EOL;"
