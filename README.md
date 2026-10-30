@@ -1,60 +1,52 @@
-
 # Brankas Kredensial — IT RAJA EMAS INDONESIA
 
-Aplikasi internal PHP Native 8.5 + MySQL dengan CSS responsif, role access control, enkripsi kredensial, audit log, dan integrasi GitHub OAuth/repository.
+Aplikasi full-stack React + Vite dan Node.js/Express dengan MySQL, role access control, enkripsi kredensial, audit log, dan integrasi GitHub.
 
 ## Kebutuhan
-- PHP 8.5 (ekstensi `pdo_mysql`, `openssl`, `curl`, `json`)
+- Node.js 20 atau lebih baru
 - MySQL 8+ / MariaDB yang kompatibel
-- Apache (Laragon/XAMPP)
-- Git CLI hanya diperlukan jika ingin menggunakan fitur sinkronisasi Git lokal
+- Git CLI (hanya untuk operasi repository)
 
-## Instalasi Laragon
-1. Ekstrak folder `brankas_kredensial` ke `C:\laragon\www\brankas_kredensial`.
-2. Buat database dengan mengimpor `database/schema.sql` melalui phpMyAdmin.
-3. Salin `config/config.example.php` menjadi `config/config.php`.
-4. Atur database, `APP_URL` (contoh `http://localhost/brankas_kredensial/public`), `APP_KEY`, dan kredensial GitHub.
-5. Buat key enkripsi acak dengan PHP:
-   `php -r "echo base64_encode(random_bytes(32)), PHP_EOL;"`
-   Masukkan hasilnya ke `APP_KEY`. Jangan commit `config/config.php`.
-6. Buat GitHub OAuth App di GitHub Developer Settings. Set callback URL:
-   `http://localhost/brankas_kredensial/public/github/callback.php`
-   Isi `GITHUB_CLIENT_ID` dan `GITHUB_CLIENT_SECRET` di config.
-7. Buka `http://localhost/brankas_kredensial/public/setup.php` satu kali untuk membuat admin awal. Hapus/rename `public/setup.php` setelah akun admin dibuat.
-8. Login menggunakan email dan password admin yang dibuat di setup.
+## Menjalankan lokal
+1. Buat database MySQL lalu impor `database/schema.sql`.
+2. Salin `.env.example` menjadi `.env`.
+3. Isi kredensial database, URL aplikasi, `APP_KEY`, dan `SESSION_SECRET`. Buat kunci terpisah:
+   - `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64'))"`
+   - `node -e "console.log(require('node:crypto').randomBytes(48).toString('base64'))"`
+4. Instal paket dengan `npm install`.
+5. Jalankan mode pengembangan dengan `npm run dev`, atau build dan mulai server dengan `npm run build` lalu `npm start`.
+6. Buka URL frontend, lalu buat akun admin pertama di halaman setup. Setup otomatis ditutup setelah admin pertama dibuat.
 
-## Catatan URL
-Untuk Laragon, Virtual Host lebih disarankan. Jika memakai URL `/public`, pastikan `APP_URL` sesuai persis. Idealnya document root diarahkan langsung ke folder `public/`.
+Untuk GitHub OAuth, atur `GITHUB_CLIENT_ID` dan `GITHUB_CLIENT_SECRET`. Set callback URL OAuth menjadi `${APP_URL}/api/github/callback`.
 
-## Deploy ke Plesk
-1. Pilih runtime **PHP** (bukan Static / Generic) dan gunakan PHP 8.5 dengan ekstensi `pdo_mysql`, `openssl`, `curl`, dan `json`.
-2. Deploy seluruh repository, lalu atur document root domain ke folder `public/`. Jangan arahkan document root ke root repository.
-3. Buat database MySQL dan impor `database/schema.sql`.
-4. Atur variabel lingkungan yang tercantum di `.env.example` melalui pengaturan deploy/PHP Plesk. Aplikasi juga membaca file `.env` di root repository bila platform menaruh variabel di sana. Buat `APP_KEY` acak 32 byte Base64; jangan memakai nilai contoh.
-5. Isi `APP_URL` dengan URL HTTPS domain tanpa slash di akhir, serta kredensial database produksi. Pastikan folder `storage/repos` dapat ditulis oleh PHP jika fitur GitHub repository digunakan.
-6. Setelah konfigurasi selesai, buka `/setup.php` untuk membuat admin awal, lalu hapus atau nonaktifkan `public/setup.php`.
+Server Express menyajikan hasil build Vite dan API dari origin yang sama. Sesi disimpan di MySQL; tabel sesi dibuat otomatis saat server berjalan.
 
-Deployment sebagai Static / Generic tidak menjalankan PHP dan tidak dapat digunakan untuk aplikasi ini.
+## Deploy Node.js
+Gunakan hosting yang menjalankan proses Node.js persisten—bukan preset Static / Generic. Atur:
+- Build command: `npm ci && npm run build`
+- Start command: `npm start`
+- Node.js: versi 20 atau lebih baru
+- `NODE_ENV=production` dan `APP_URL` memakai HTTPS
+- Environment variables: semua nilai produksi dari `.env.example`
+- Document root/proxy: arahkan domain ke port proses Node yang dialokasikan platform
+
+Jika hosting hanya mendukung file statis, aplikasi ini tidak dapat menjalankan autentikasi, API, atau MySQL di sana; deploy juga backend Node.js pada hosting yang mendukungnya. Jangan commit file `.env` atau `config/config.php`.
+
+## Migrasi dari PHP lama
+Skema `database/schema.sql` dan nama tabel tetap dipakai agar data akun, kategori, kredensial, audit, serta koneksi GitHub yang ada tetap kompatibel. `APP_KEY` harus tetap sama agar data AES-256-GCM yang sudah tersimpan dapat didekripsi. Jangan mengubah atau membuat `APP_KEY` baru sebelum seluruh data lama dienkripsi ulang.
 
 ## Role
-- `admin`: semua fungsi termasuk pengelolaan pengguna dan koneksi GitHub.
-- `it`: CRUD kredensial, melihat dashboard, akses GitHub yang diizinkan.
-- `viewer`: hanya melihat daftar kredensial; password rahasia tidak dapat dibuka.
+- `admin`: semua fungsi termasuk pengguna, audit, hapus kredensial, serta operasi GitHub.
+- `it`: CRUD kredensial, melihat dashboard, akses GitHub dan operasi repository.
+- `viewer`: hanya melihat daftar dan detail kredensial; password rahasia tidak dapat dibuka.
 
-## Keamanan penting
-- Kredensial layanan dienkripsi dengan AES-256-GCM melalui OpenSSL. Simpan `APP_KEY` di luar repository/di environment secret dan buat backup aman.
-- Password akun pengguna memakai `password_hash()` dan `password_verify()`.
-- Semua form mutasi memakai CSRF token; query memakai PDO prepared statements.
-- Untuk penggunaan produksi, wajib HTTPS, batasi akses jaringan, aktifkan backup, audit log, rate limiting, dan review keamanan. Jangan gunakan akun admin bersama.
-- OAuth `repo` scope memberi izin luas pada repository. Gunakan hanya akun/organisasi yang berwenang dan batasi izin aplikasi sesuai kebutuhan.
-- Fitur GitHub di versi ini menampilkan repository dan melakukan operasi Git lokal `clone`, `pull`, `status`, dan `push` pada folder workspace yang ditentukan. Push mengubah remote repository sungguhan; lakukan hanya setelah memastikan branch dan perubahan.
-- Jangan simpan token GitHub plaintext di database. Token OAuth disimpan terenkripsi.
-- Git command hanya boleh berjalan di folder `storage/repos` yang dikelola aplikasi. Untuk deployment multi-user/produksi, pisahkan worker dan sandbox proses Git.
+## Keamanan
+- Password kredensial dan token GitHub disimpan dengan AES-256-GCM; password akun memakai bcrypt.
+- Simpan `APP_KEY`, `SESSION_SECRET`, kredensial DB, dan rahasia OAuth di environment server. Jangan masukkan rahasia ke Git atau chat.
+- Gunakan HTTPS, batasi akses jaringan database, siapkan backup, dan rotasi rahasia yang pernah terunggah.
+- OAuth GitHub menggunakan scope `repo`, yang memberi akses luas ke repository. Batasi aplikasi dan akun yang dihubungkan.
+- Clone, pull, status, dan push berjalan di `REPO_WORKSPACE`. Push mengubah remote GitHub sungguhan; verifikasi branch dan perubahan sebelum mengeksekusinya.
 
-## Fitur
-- Dashboard ringkasan
-- CRUD kredensial + pencarian/kategori
-- Enkripsi/dekripsi password tersimpan
-- Pengguna dan role (admin)
-- Audit log
-- GitHub OAuth, list repository, clone/pull/status/push
+## Verifikasi
+- `npm test`
+- `npm run build`

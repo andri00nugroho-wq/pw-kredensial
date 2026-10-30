@@ -1,6 +1,10 @@
 /config/config.php
 /.env
-/storage/repos/*
-!/storage/repos/.gitkeep
+/node_modules/
+/dist/
+/coverage/
+/npm-debug.log*
 /storage/logs/*
+/storage/repos/*
 !/storage/logs/.gitkeep
+!/storage/repos/.gitkeep
